@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "468349231006",
+    "project_id": "nineheartz-761bf",
+    "storage_bucket": "nineheartz-761bf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:468349231006:android:059f82433dd4b0e2dcc08f",
+        "android_client_info": {
+          "package_name": "com.example.nineheartz_assignment"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "468349231006-0jdoei1cps6r302rr8vhi7e6i6notvj0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJFHPcTM7-z24V9cGlrej9P0WH29NWdLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "468349231006-0jdoei1cps6r302rr8vhi7e6i6notvj0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
