@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'google_login.dart';
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await Permission.microphone.request();
