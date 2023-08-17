@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(title: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_)=>const RecordPage()));
+          Navigator.push(context, MaterialPageRoute(builder: (_)=> RecordAndPlayScreen()));
         },
         child: const Text("Go To Record Screen",style: TextStyle(
           color: Colors.white,

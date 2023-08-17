@@ -1,224 +1,205 @@
-import 'dart:async';
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path/path.dart' as path;
-import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:intl/intl.dart' show DateFormat;
 
-class RecordPage extends StatefulWidget {
-  const RecordPage({Key? key}) : super(key: key);
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:nineheartz_assignment/providers/play_audio_provider.dart';
+import 'package:nineheartz_assignment/providers/record_audio_provider.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:provider/provider.dart';
+import 'package:simple_ripple_animation/simple_ripple_animation.dart';
+
+class RecordAndPlayScreen extends StatefulWidget {
+  const RecordAndPlayScreen({Key? key}) : super(key: key);
 
   @override
-  State<RecordPage> createState() => _RecordPageState();
+  State<RecordAndPlayScreen> createState() => _RecordAndPlayScreenState();
 }
 
-class _RecordPageState extends State<RecordPage> {
-  late FlutterSoundRecorder _myRecorder;
-  final audioPlayer = AssetsAudioPlayer();
-  late String filePath;
-  bool _play = false;
-  String _recorderTxt = '00:00:00';
+class _RecordAndPlayScreenState extends State<RecordAndPlayScreen> {
+  customizeStatusAndNavigationBar() {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        statusBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light));
+  }
 
   @override
   void initState() {
+    customizeStatusAndNavigationBar();
     super.initState();
-    startIt();
-  }
-
-  void startIt() async {
-    filePath = '/sdcard/Download/temp.wav';
-    _myRecorder = FlutterSoundRecorder();
-
-    await _myRecorder.openRecorder();
-    await _myRecorder.setSubscriptionDuration(const Duration(milliseconds: 10));
-    await initializeDateFormatting();
   }
 
   @override
   Widget build(BuildContext context) {
+    final _recordProvider = Provider.of<RecordAudioProvider>(context);
+    final _playProvider = Provider.of<PlayAudioProvider>(context);
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(''),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-      ),
-      body: Center(
+      body: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+                fit: BoxFit.cover,
+                image: NetworkImage(
+                    "https://images.pexels.com/photos/2489988/pexels-photo-2489988.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"))),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              height: 400.0,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color.fromARGB(255, 2, 199, 226),
-                    Color.fromARGB(255, 6, 75, 210)
-                  ],
-                ),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.elliptical(
-                      MediaQuery.of(context).size.width, 100.0),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  _recorderTxt,
-                  style: const TextStyle(fontSize: 70),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                buildElevatedButton(
-                  icon: Icons.mic,
-                  iconColor: Colors.red,
-                  f: record,
-                ),
-                const SizedBox(
-                  width: 30,
-                ),
-                buildElevatedButton(
-                  icon: Icons.stop,
-                  iconColor: Colors.black,
-                  f: stopRecord,
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                buildElevatedButton(
-                  icon: Icons.play_arrow,
-                  iconColor: Colors.black,
-                  f: startPlaying,
-                ),
-                const SizedBox(
-                  width: 30,
-                ),
-                buildElevatedButton(
-                  icon: Icons.stop,
-                  iconColor: Colors.black,
-                  f: stopPlaying,
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                elevation: 10.0,
-              ),
-              onPressed: () {
-                setState(() {
-                  _play = !_play;
-                });
-                if (_play) startPlaying();
-                if (!_play) stopPlaying();
-              },
-              icon: _play
-                  ? const Icon(
-                      Icons.stop,
-                    )
-                  : const Icon(Icons.play_arrow),
-              label: _play
-                  ? const Text(
-                      "Stop Playing",
-                      style: TextStyle(
-                        fontSize: 25,
-                      ),
-                    )
-                  : const Text(
-                      "Start Playing",
-                      style: TextStyle(
-                        fontSize: 25,
-                      ),
-                    ),
-            ),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 80),
+            _recordProvider.recordedFilePath.isEmpty
+                ? _recordHeading()
+                : _playAudioHeading(),
+            const SizedBox(height: 40),
+            _recordProvider.recordedFilePath.isEmpty
+                ? _recordingSection()
+                : _audioPlayingSection(),
+            if (_recordProvider.recordedFilePath.isNotEmpty &&
+                !_playProvider.isSongPlaying)
+              const SizedBox(height: 40),
+            if (_recordProvider.recordedFilePath.isNotEmpty &&
+                !_playProvider.isSongPlaying)
+              _resetButton(),
           ],
         ),
       ),
     );
   }
 
-  ElevatedButton buildElevatedButton(
-      {required IconData icon, required Color iconColor, required Function f}) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(5.0),
-        side: const BorderSide(
-          color: Colors.orange,
-          width: 3.0,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        primary: Colors.white,
-        elevation: 10.0,
+  _recordHeading() {
+    return const Center(
+      child: Text(
+        'Record Audio',
+        style: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
       ),
-      onPressed: () => f(),
-      icon: Icon(
-        icon,
-        color: iconColor,
-        size: 35.0,
-      ),
-      label: const Text(''),
     );
   }
 
-  Future<void> record() async {
-    Directory dir = Directory(path.dirname(filePath));
-    if (!dir.existsSync()) {
-      dir.createSync();
+  _playAudioHeading() {
+    return const Center(
+      child: Text(
+        'Play Audio',
+        style: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+      ),
+    );
+  }
+
+  _recordingSection() {
+    final _recordProvider = Provider.of<RecordAudioProvider>(context);
+    final _recordProviderWithoutListener =
+    Provider.of<RecordAudioProvider>(context, listen: false);
+
+    if (_recordProvider.isRecording) {
+      return InkWell(
+        onTap: () async => await _recordProviderWithoutListener.stopRecording(),
+        child: RippleAnimation(
+          repeat: true,
+          color: const Color(0xff4BB543),
+          minRadius: 40,
+          ripplesCount: 6,
+          child: _commonIconSection(),
+        ),
+      );
     }
-    // _myRecorder.openRecorder();
-    await _myRecorder.startRecorder(
-      toFile: filePath,
-      codec: Codec.pcm16WAV,
-    );
 
-    StreamSubscription _recorderSubscription =
-        _myRecorder.onProgress!.listen((e) {
-      var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds,
-          isUtc: true);
-      var txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
-
-      setState(() {
-        _recorderTxt = txt.substring(0, 8);
-      });
-    });
-    // _recorderSubscription.cancel();
-  }
-
-  Future<String?> stopRecord() async {
-    _myRecorder.closeRecorder();
-    return await _myRecorder.stopRecorder();
-  }
-
-  Future<void> startPlaying() async {
-    audioPlayer.open(
-      Audio.file(filePath),
-      autoStart: true,
-      showNotification: true,
+    return InkWell(
+      onTap: () async => await _recordProviderWithoutListener.recordVoice(),
+      child: _commonIconSection(),
     );
   }
 
-  Future<void> stopPlaying() async {
-    audioPlayer.stop();
+  _commonIconSection() {
+    return Container(
+      width: 70,
+      height: 70,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xff4BB543),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: const Icon(Icons.keyboard_voice_rounded,
+          color: Colors.white, size: 30),
+    );
+  }
+
+  _audioPlayingSection() {
+    final _recordProvider = Provider.of<RecordAudioProvider>(context);
+
+    return Container(
+      width: MediaQuery.of(context).size.width - 110,
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Row(
+        children: [
+          _audioControllingSection(_recordProvider.recordedFilePath),
+          _audioProgressSection(),
+        ],
+      ),
+    );
+  }
+
+  _audioControllingSection(String songPath) {
+    final _playProvider = Provider.of<PlayAudioProvider>(context);
+    final _playProviderWithoutListen =
+    Provider.of<PlayAudioProvider>(context, listen: false);
+
+    return IconButton(
+      onPressed: () async {
+        if (songPath.isEmpty) return;
+
+        await _playProviderWithoutListen.playAudio(File(songPath));
+      },
+      icon: Icon(
+          _playProvider.isSongPlaying ? Icons.pause : Icons.play_arrow_rounded),
+      color: const Color(0xff4BB543),
+      iconSize: 30,
+    );
+  }
+
+  _audioProgressSection() {
+    final _playProvider = Provider.of<PlayAudioProvider>(context);
+
+    return Expanded(
+        child: Container(
+          width: double.maxFinite,
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: LinearPercentIndicator(
+            percent: _playProvider.currLoadingStatus,
+            backgroundColor: Colors.black26,
+            progressColor: const Color(0xff4BB543),
+          ),
+        ));
+  }
+
+  _resetButton() {
+    final _recordProvider = Provider.of<RecordAudioProvider>(context, listen: false);
+
+    return InkWell(
+      onTap: () => _recordProvider.clearOldData(),
+      child: Center(
+        child: Container(
+          width: 80,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.redAccent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text(
+            'Reset',
+            style: TextStyle(fontSize: 18, color: Colors.white),
+          ),
+        ),
+      ),
+    );
   }
 }
